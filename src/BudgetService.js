@@ -10,20 +10,20 @@ export class BudgetService {
   constructor() {}
 
   getAll() {
-    return [new Budget("202101", 31)];
+    return [];
   }
 
   getBudgetDataInDuration(start, end) {
     const startYearMonth = dayjs(start).format("YYYYMM");
     const endYearMonth = dayjs(end).format("YYYYMM");
     const durationByMonth =
-      dayjs(startYearMonth).diff(dayjs(endYearMonth), "month", true) + 1;
+      dayjs(endYearMonth).diff(dayjs(startYearMonth), "month", true) + 1;
     const data = this.getAll();
     const budgetDataInDuration = data.filter((item) => {
-      const result = dayjs(item.year_month).isSame(
+      const result = dayjs(item.year_month).isBetween(
         dayjs(startYearMonth),
         dayjs(endYearMonth),
-        "month"
+        "month", '[]'
       );
 
       return result;
@@ -40,17 +40,16 @@ export class BudgetService {
       const { durationByMonth, budgetDataInDuration } =
         this.getBudgetDataInDuration(start, end);
       for (let i = 0; i < durationByMonth; i++) {
+        const budgetForMonth = budgetDataInDuration[i] ? budgetDataInDuration[i].amount : 0
         const budgetPerDay =
-          budgetDataInDuration[i].amount /
+            budgetForMonth /
           dayjs(start).add(i, "month").daysInMonth();
-
-        if (i === 0 && dayjs(start).date() !== 1) {
-          // 不足月
-          total +=
-            (dayjs(start).daysInMonth() - dayjs(start).date() + 1) *
-            budgetPerDay;
-        } else if (i === durationByMonth.length - 1 && isFinalDate(end)) {
-          // 不足月
+        // 第一個月
+        if (i === 0) {
+          const lastDate = durationByMonth > 1 ? dayjs(start).daysInMonth() : dayjs(end).date()
+          total += (lastDate - dayjs(start).date() + 1) * budgetPerDay
+        } else if (i === durationByMonth - 1) {
+          // 最後一個月
           total += dayjs(end).date() * budgetPerDay;
         } else {
           // 直接+足月的 budget
@@ -63,17 +62,3 @@ export class BudgetService {
     }
   }
 }
-
-// while(start< end){
-//     if(start + 1month > end){
-//        total += amount/這個月總天數* 範圍內天數
-//     }
-//     else() {
-
-//     }
-// }
-
-// const thisMonth = start.addMonth(i)
-// const thisMonthBudget =
-// const thisMonthDays = dayjs(start).daysInMonth()
-// cosnt thisMonthPerDayBudget = thisMonthBudget / thisMonthDays
